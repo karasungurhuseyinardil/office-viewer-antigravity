@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a3a8f"/>
+      <stop offset="1" stop-color="#5b2d91"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fd1ff"/>
+      <stop offset="1" stop-color="#2f7bff"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0b0b2a" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Background tile -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#glow)"/>
+
+  <!-- Fanned sheets: spreadsheet (green), slides (orange), document (blue) -->
+  <g filter="url(#shadow)">
+    <g transform="rotate(-16 128 140)">
+      <rect x="66" y="52" width="104" height="134" rx="12" fill="#1f9d63"/>
+      <g stroke="#ffffff" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round">
+        <line x1="82" y1="80" x2="154" y2="80"/>
+        <line x1="82" y1="102" x2="154" y2="102"/>
+        <line x1="110" y1="68" x2="110" y2="114"/>
+      </g>
+    </g>
+    <g transform="rotate(14 128 140)">
+      <rect x="86" y="50" width="104" height="134" rx="12" fill="#f0703c"/>
+      <rect x="104" y="70" width="68" height="40" rx="6" fill="#ffffff" fill-opacity="0.55"/>
+    </g>
+
+    <!-- Front page with folded corner -->
+    <path d="M78 58 h72 l34 34 v104 a12 12 0 0 1 -12 12 h-94 a12 12 0 0 1 -12 -12 v-126 a12 12 0 0 1 12 -12 z" fill="#ffffff"/>
+    <path d="M150 58 v22 a12 12 0 0 0 12 12 h22 z" fill="#c9d3ff"/>
+    <rect x="84" y="88" width="44" height="9" rx="4.5" fill="#2b4fd6"/>
+    <g fill="#c4cad8">
+      <rect x="84" y="108" width="84" height="7" rx="3.5"/>
+      <rect x="84" y="124" width="76" height="7" rx="3.5"/>
+      <rect x="84" y="140" width="84" height="7" rx="3.5"/>
+      <rect x="84" y="156" width="54" height="7" rx="3.5"/>
+    </g>
+    <rect x="84" y="174" width="36" height="7" rx="3.5" fill="#ffd54f"/>
+  </g>
+
+  <!-- View badge -->
+  <g filter="url(#shadow)">
+    <circle cx="184" cy="186" r="36" fill="url(#badge)" stroke="#ffffff" stroke-width="6"/>
+    <path d="M162 186 q22 -22 44 0 q-22 22 -44 0 z" fill="#ffffff"/>
+    <circle cx="184" cy="186" r="8" fill="#2f7bff"/>
+    <circle cx="186.5" cy="183.5" r="2.6" fill="#ffffff"/>
+  </g>
+</svg>

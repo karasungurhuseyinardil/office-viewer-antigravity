@@ -1,0 +1,840 @@
+{
+  "name": "office-viewer-antigravity",
+  "displayName": "Office Viewer — every file type",
+  "description": "%ext.description%",
+  "version": "0.6.0",
+  "publisher": "ardilkarasungur",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karasungurhuseyinardil/office-viewer-antigravity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/karasungurhuseyinardil/office-viewer-antigravity/issues"
+  },
+  "homepage": "https://github.com/karasungurhuseyinardil/office-viewer-antigravity#readme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#2a3a8f",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "office-document",
+        "aliases": [
+          "Office Document"
+        ],
+        "extensions": [
+          ".docx",
+          ".xlsx",
+          ".xls",
+          ".csv"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Office Viewer",
+      "properties": {
+        "officeViewer.language": {
+          "type": "string",
+          "enum": [
+            "en",
+            "es",
+            "fr",
+            "tr"
+          ],
+          "default": "en",
+          "order": 0,
+          "enumItemLabels": [
+            "English",
+            "Español",
+            "Français",
+            "Türkçe"
+          ],
+          "markdownDescription": "%config.language%"
+        },
+        "officeViewer.useEditorAutoSave": {
+          "type": "boolean",
+          "default": true,
+          "order": 1,
+          "markdownDescription": "%config.useEditorAutoSave%"
+        },
+        "officeViewer.autoSaveTriggers": {
+          "type": "array",
+          "default": [],
+          "order": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "afterDelay",
+              "onFocusChange",
+              "onWindowChange"
+            ],
+            "enumDescriptions": [
+              "%config.trigger.afterDelay%",
+              "%config.trigger.onFocusChange%",
+              "%config.trigger.onWindowChange%"
+            ]
+          },
+          "markdownDescription": "%config.autoSaveTriggers%"
+        },
+        "officeViewer.view.pageTheme": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "auto"
+          ],
+          "default": "light",
+          "order": 10,
+          "enumDescriptions": [
+            "%config.pageTheme.light%",
+            "%config.pageTheme.dark%",
+            "%config.pageTheme.auto%"
+          ],
+          "description": "%config.pageTheme%"
+        },
+        "officeViewer.view.fullWidth": {
+          "type": "boolean",
+          "default": false,
+          "order": 11,
+          "description": "%config.fullWidth%"
+        },
+        "officeViewer.view.fontScale": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.7,
+          "maximum": 2,
+          "order": 12,
+          "description": "%config.fontScale%"
+        },
+        "officeViewer.openInEditMode": {
+          "type": "boolean",
+          "default": false,
+          "order": 20,
+          "description": "%config.openInEditMode%"
+        },
+        "officeViewer.docx.createBackup": {
+          "type": "boolean",
+          "default": true,
+          "order": 21,
+          "description": "%config.createBackup%"
+        },
+        "officeViewer.openAllFiles": {
+          "type": "boolean",
+          "default": true,
+          "order": 22,
+          "markdownDescription": "%config.openAllFiles%"
+        },
+        "officeViewer.meetingNote.fileName": {
+          "type": "string",
+          "default": "DD.MM.YYYY",
+          "order": 30,
+          "markdownDescription": "%config.meetingNoteFileName%"
+        },
+        "officeViewer.meetingNote.template": {
+          "type": "string",
+          "default": "",
+          "order": 31,
+          "markdownDescription": "%config.meetingNoteTemplate%"
+        },
+        "officeViewer.autoSave": {
+          "type": "string",
+          "enum": [
+            "default",
+            "off",
+            "afterDelay",
+            "onFocusChange",
+            "onWindowChange"
+          ],
+          "default": "default",
+          "deprecationMessage": "%config.autoSaveDeprecated%"
+        },
+        "officeViewer.export.browserPath": {
+          "type": "string",
+          "default": "",
+          "order": 40,
+          "markdownDescription": "%config.browserPath%"
+        },
+        "officeViewer.notes.searchFolders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "order": 41,
+          "markdownDescription": "%config.searchFolders%"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "officeViewer.revealInExplorer",
+        "title": "%cmd.revealInExplorer%",
+        "category": "Office Viewer"
+      },
+      {
+        "command": "officeViewer.copyPath",
+        "title": "%cmd.copyPath%",
+        "category": "Office Viewer"
+      },
+      {
+        "command": "officeViewer.newMeetingNote",
+        "title": "%cmd.newMeetingNote%",
+        "category": "Office Viewer",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "officeViewer.searchNotes",
+        "title": "%cmd.searchNotes%",
+        "category": "Office Viewer",
+        "icon": "$(search)"
+      },
+      {
+        "command": "officeViewer.actionList",
+        "title": "%cmd.actionList%",
+        "category": "Office Viewer",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "officeViewer.convert",
+        "title": "%cmd.convert%",
+        "category": "Office Viewer",
+        "icon": "$(file-symlink-file)"
+      },
+      {
+        "command": "officeViewer.compare",
+        "title": "%cmd.compare%",
+        "category": "Office Viewer",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "officeViewer.installVsix",
+        "title": "%cmd.installVsix%",
+        "category": "Office Viewer",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "officeViewer.openInViewer",
+        "title": "%cmd.openInViewer%",
+        "category": "Office Viewer",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "officeViewer.openInTextEditor",
+        "title": "%cmd.openInTextEditor%",
+        "category": "Office Viewer",
+        "icon": "$(edit)"
+      }
+    ],
+    "menus": {
+      "webview/context": [
+        {
+          "command": "officeViewer.revealInExplorer",
+          "when": "webviewId =~ /^officeViewer\\./",
+          "group": "z_file@1"
+        },
+        {
+          "command": "officeViewer.copyPath",
+          "when": "webviewId =~ /^officeViewer\\./",
+          "group": "z_file@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "officeViewer.revealInExplorer",
+          "when": "activeCustomEditorId =~ /^officeViewer\\./"
+        },
+        {
+          "command": "officeViewer.copyPath",
+          "when": "activeCustomEditorId =~ /^officeViewer\\./"
+        },
+        {
+          "command": "officeViewer.convert",
+          "when": "activeCustomEditorId =~ /^officeViewer./ || editorLangId == markdown"
+        },
+        {
+          "command": "officeViewer.compare",
+          "when": "activeCustomEditorId =~ /^officeViewer.(docx|sheet|pptx)$/"
+        },
+        {
+          "command": "officeViewer.installVsix",
+          "when": "activeCustomEditorId == 'officeViewer.vsix'"
+        },
+        {
+          "command": "officeViewer.openInViewer",
+          "when": "!activeCustomEditorId && resourceScheme == file"
+        },
+        {
+          "command": "officeViewer.openInTextEditor",
+          "when": "activeCustomEditorId =~ /^officeViewer\\./"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "officeViewer.newMeetingNote",
+          "when": "explorerResourceIsFolder",
+          "group": "2_workspace@10"
+        },
+        {
+          "command": "officeViewer.searchNotes",
+          "when": "explorerResourceIsFolder",
+          "group": "4_search@10"
+        },
+        {
+          "command": "officeViewer.actionList",
+          "when": "explorerResourceIsFolder",
+          "group": "2_workspace@11"
+        },
+        {
+          "command": "officeViewer.convert",
+          "when": "!explorerResourceIsFolder && resourceExtname =~ /^.(docx|xlsx|xls|csv|pptx|md|markdown)$/i",
+          "group": "7_modification@10"
+        },
+        {
+          "command": "officeViewer.compare",
+          "when": "!explorerResourceIsFolder && resourceExtname =~ /^.(docx|xlsx|xls|csv|pptx)$/i",
+          "group": "3_compare@10"
+        },
+        {
+          "command": "officeViewer.installVsix",
+          "when": "!explorerResourceIsFolder && resourceExtname == .vsix",
+          "group": "7_modification@11"
+        },
+        {
+          "command": "officeViewer.openInViewer",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@90"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "officeViewer.convert",
+          "when": "resourceExtname =~ /^.(docx|xlsx|xls|csv|pptx|md|markdown)$/i",
+          "group": "2_files@50"
+        },
+        {
+          "command": "officeViewer.compare",
+          "when": "resourceExtname =~ /^.(docx|xlsx|xls|csv|pptx)$/i",
+          "group": "2_files@51"
+        },
+        {
+          "command": "officeViewer.openInViewer",
+          "when": "!activeCustomEditorId",
+          "group": "2_files@52"
+        },
+        {
+          "command": "officeViewer.openInTextEditor",
+          "when": "activeCustomEditorId =~ /^officeViewer\\./",
+          "group": "2_files@53"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "officeViewer.openInViewer",
+          "when": "resourceScheme == file && !activeCustomEditorId && config.officeViewer.openAllFiles",
+          "group": "navigation@90"
+        }
+      ]
+    },
+    "customEditors": [
+      {
+        "viewType": "officeViewer.docx",
+        "displayName": "%editor.docx%",
+        "selector": [
+          {
+            "filenamePattern": "*.docx"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.sheet",
+        "displayName": "%editor.sheet%",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.xls"
+          },
+          {
+            "filenamePattern": "*.csv"
+          },
+          {
+            "filenamePattern": "*.ods"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.pdf",
+        "displayName": "%editor.pdf%",
+        "selector": [
+          {
+            "filenamePattern": "*.pdf"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.pptx",
+        "displayName": "%editor.pptx%",
+        "selector": [
+          {
+            "filenamePattern": "*.pptx"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.vsix",
+        "displayName": "%editor.vsix%",
+        "selector": [
+          {
+            "filenamePattern": "*.vsix"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.binary",
+        "displayName": "%editor.binary%",
+        "selector": [
+          {
+            "filenamePattern": "*.zip"
+          },
+          {
+            "filenamePattern": "*.jar"
+          },
+          {
+            "filenamePattern": "*.war"
+          },
+          {
+            "filenamePattern": "*.ear"
+          },
+          {
+            "filenamePattern": "*.apk"
+          },
+          {
+            "filenamePattern": "*.aab"
+          },
+          {
+            "filenamePattern": "*.nupkg"
+          },
+          {
+            "filenamePattern": "*.whl"
+          },
+          {
+            "filenamePattern": "*.xpi"
+          },
+          {
+            "filenamePattern": "*.epub"
+          },
+          {
+            "filenamePattern": "*.crx"
+          },
+          {
+            "filenamePattern": "*.7z"
+          },
+          {
+            "filenamePattern": "*.rar"
+          },
+          {
+            "filenamePattern": "*.gz"
+          },
+          {
+            "filenamePattern": "*.tgz"
+          },
+          {
+            "filenamePattern": "*.tar"
+          },
+          {
+            "filenamePattern": "*.bz2"
+          },
+          {
+            "filenamePattern": "*.xz"
+          },
+          {
+            "filenamePattern": "*.zst"
+          },
+          {
+            "filenamePattern": "*.odt"
+          },
+          {
+            "filenamePattern": "*.odp"
+          },
+          {
+            "filenamePattern": "*.odg"
+          },
+          {
+            "filenamePattern": "*.ott"
+          },
+          {
+            "filenamePattern": "*.rtf"
+          },
+          {
+            "filenamePattern": "*.doc"
+          },
+          {
+            "filenamePattern": "*.ppt"
+          },
+          {
+            "filenamePattern": "*.pps"
+          },
+          {
+            "filenamePattern": "*.msg"
+          },
+          {
+            "filenamePattern": "*.ttf"
+          },
+          {
+            "filenamePattern": "*.otf"
+          },
+          {
+            "filenamePattern": "*.woff"
+          },
+          {
+            "filenamePattern": "*.woff2"
+          },
+          {
+            "filenamePattern": "*.eot"
+          },
+          {
+            "filenamePattern": "*.png"
+          },
+          {
+            "filenamePattern": "*.jpg"
+          },
+          {
+            "filenamePattern": "*.jpeg"
+          },
+          {
+            "filenamePattern": "*.jfif"
+          },
+          {
+            "filenamePattern": "*.gif"
+          },
+          {
+            "filenamePattern": "*.webp"
+          },
+          {
+            "filenamePattern": "*.bmp"
+          },
+          {
+            "filenamePattern": "*.ico"
+          },
+          {
+            "filenamePattern": "*.cur"
+          },
+          {
+            "filenamePattern": "*.avif"
+          },
+          {
+            "filenamePattern": "*.apng"
+          },
+          {
+            "filenamePattern": "*.tif"
+          },
+          {
+            "filenamePattern": "*.tiff"
+          },
+          {
+            "filenamePattern": "*.heic"
+          },
+          {
+            "filenamePattern": "*.heif"
+          },
+          {
+            "filenamePattern": "*.psd"
+          },
+          {
+            "filenamePattern": "*.ai"
+          },
+          {
+            "filenamePattern": "*.icns"
+          },
+          {
+            "filenamePattern": "*.mp3"
+          },
+          {
+            "filenamePattern": "*.wav"
+          },
+          {
+            "filenamePattern": "*.ogg"
+          },
+          {
+            "filenamePattern": "*.oga"
+          },
+          {
+            "filenamePattern": "*.m4a"
+          },
+          {
+            "filenamePattern": "*.flac"
+          },
+          {
+            "filenamePattern": "*.aac"
+          },
+          {
+            "filenamePattern": "*.opus"
+          },
+          {
+            "filenamePattern": "*.weba"
+          },
+          {
+            "filenamePattern": "*.wma"
+          },
+          {
+            "filenamePattern": "*.mp4"
+          },
+          {
+            "filenamePattern": "*.webm"
+          },
+          {
+            "filenamePattern": "*.mov"
+          },
+          {
+            "filenamePattern": "*.m4v"
+          },
+          {
+            "filenamePattern": "*.ogv"
+          },
+          {
+            "filenamePattern": "*.mkv"
+          },
+          {
+            "filenamePattern": "*.avi"
+          },
+          {
+            "filenamePattern": "*.wmv"
+          },
+          {
+            "filenamePattern": "*.flv"
+          },
+          {
+            "filenamePattern": "*.exe"
+          },
+          {
+            "filenamePattern": "*.dll"
+          },
+          {
+            "filenamePattern": "*.so"
+          },
+          {
+            "filenamePattern": "*.dylib"
+          },
+          {
+            "filenamePattern": "*.bin"
+          },
+          {
+            "filenamePattern": "*.dat"
+          },
+          {
+            "filenamePattern": "*.class"
+          },
+          {
+            "filenamePattern": "*.pyc"
+          },
+          {
+            "filenamePattern": "*.pyo"
+          },
+          {
+            "filenamePattern": "*.wasm"
+          },
+          {
+            "filenamePattern": "*.o"
+          },
+          {
+            "filenamePattern": "*.obj"
+          },
+          {
+            "filenamePattern": "*.lib"
+          },
+          {
+            "filenamePattern": "*.a"
+          },
+          {
+            "filenamePattern": "*.pdb"
+          },
+          {
+            "filenamePattern": "*.node"
+          },
+          {
+            "filenamePattern": "*.iso"
+          },
+          {
+            "filenamePattern": "*.img"
+          },
+          {
+            "filenamePattern": "*.dmg"
+          },
+          {
+            "filenamePattern": "*.msi"
+          },
+          {
+            "filenamePattern": "*.cab"
+          },
+          {
+            "filenamePattern": "*.deb"
+          },
+          {
+            "filenamePattern": "*.rpm"
+          },
+          {
+            "filenamePattern": "*.appx"
+          },
+          {
+            "filenamePattern": "*.msix"
+          },
+          {
+            "filenamePattern": "*.db"
+          },
+          {
+            "filenamePattern": "*.sqlite"
+          },
+          {
+            "filenamePattern": "*.sqlite3"
+          },
+          {
+            "filenamePattern": "*.mdb"
+          },
+          {
+            "filenamePattern": "*.accdb"
+          },
+          {
+            "filenamePattern": "*.parquet"
+          },
+          {
+            "filenamePattern": "*.avro"
+          },
+          {
+            "filenamePattern": "*.pkl"
+          },
+          {
+            "filenamePattern": "*.npy"
+          },
+          {
+            "filenamePattern": "*.npz"
+          },
+          {
+            "filenamePattern": "*.h5"
+          },
+          {
+            "filenamePattern": "*.onnx"
+          },
+          {
+            "filenamePattern": "*.pt"
+          },
+          {
+            "filenamePattern": "*.ckpt"
+          },
+          {
+            "filenamePattern": "*.safetensors"
+          },
+          {
+            "filenamePattern": "*.glb"
+          },
+          {
+            "filenamePattern": "*.fbx"
+          },
+          {
+            "filenamePattern": "*.blend"
+          },
+          {
+            "filenamePattern": "*.stl"
+          },
+          {
+            "filenamePattern": "*.3ds"
+          },
+          {
+            "filenamePattern": "*.max"
+          },
+          {
+            "filenamePattern": "*.sketch"
+          },
+          {
+            "filenamePattern": "*.fig"
+          },
+          {
+            "filenamePattern": "*.xd"
+          },
+          {
+            "filenamePattern": "*.docm"
+          },
+          {
+            "filenamePattern": "*.xlsm"
+          },
+          {
+            "filenamePattern": "*.pptm"
+          },
+          {
+            "filenamePattern": "*.keystore"
+          },
+          {
+            "filenamePattern": "*.jks"
+          },
+          {
+            "filenamePattern": "*.p12"
+          },
+          {
+            "filenamePattern": "*.pfx"
+          },
+          {
+            "filenamePattern": "*.der"
+          },
+          {
+            "filenamePattern": "*.cer"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "officeViewer.file",
+        "displayName": "%editor.file%",
+        "selector": [
+          {
+            "filenamePattern": "*"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "npm run typecheck && npm run build -- --production && vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "highlight.js": "11.12.0",
+    "html-to-docx": "1.8.0",
+    "jszip": "3.10.1",
+    "mammoth": "1.12.0",
+    "marked": "18.0.14",
+    "pdfjs-dist": "4.10.38",
+    "turndown": "7.2.4",
+    "turndown-plugin-gfm": "1.0.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "@types/turndown": "5.0.6",
+    "@types/vscode": "1.90.0",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  }
+}
