@@ -163,6 +163,26 @@ body.vscode-light {
 .hex-view { font-family: var(--vscode-editor-font-family, Consolas, monospace); font-size: 12px; line-height: 1.45; margin: 8px 0; white-space: pre; overflow: auto; }
 .rtf-view { font-family: var(--vscode-font-family); white-space: pre-wrap; max-width: 900px; margin: 0 auto; line-height: 1.5; }
 
+/* ---------- DLL / EXE / PDB ---------- */
+.pe-table { border-collapse: collapse; margin: 12px 0 8px; font-size: 13px; }
+.pe-table th { text-align: left; font-weight: 500; opacity: 0.7; padding: 3px 16px 3px 0; vertical-align: top; white-space: nowrap; }
+.pe-table td { padding: 3px 0; overflow-wrap: anywhere; }
+.pe-list { margin: 4px 0 8px; padding-left: 20px; font-size: 12.5px; }
+.pe-list li { margin: 2px 0; overflow-wrap: anywhere; }
+.pe-list small { opacity: 0.65; }
+.pe-root { overflow-wrap: anywhere; margin: 4px 0; }
+.pe-types { font-family: var(--vscode-editor-font-family, Consolas, monospace); font-size: 12.5px; }
+.pe-ns > summary { font-weight: 600; cursor: pointer; padding: 3px 0; }
+.pe-ns { margin-left: 4px; }
+.pe-type { margin-left: 18px; }
+.pe-type > summary { cursor: pointer; padding: 1px 0; color: var(--hl-type); }
+.pe-type ul { margin: 2px 0 6px; padding-left: 28px; list-style: '› '; color: var(--hl-function); }
+.pe-type.private > summary, .pe-type li.private { opacity: 0.55; }
+.pe-type > summary .cs-btn { margin-left: 8px; padding: 0 6px; font-size: 11px; line-height: 16px; vertical-align: middle; opacity: 0; }
+.pe-type > summary:hover .cs-btn, .pe-type > summary .cs-btn:focus-visible, .pe-type[open] > summary .cs-btn { opacity: 1; }
+.pe-type li.method { cursor: pointer; border-radius: 3px; padding: 0 4px; }
+.pe-type li.method:hover, .pe-type li.method:focus-visible { background: var(--vscode-list-hoverBackground, #8883); text-decoration: underline; outline: none; }
+
 /* ---------- .vsix ---------- */
 .vsix-page { max-width: 900px; margin: 0 auto; }
 .vsix-header { display: flex; gap: 16px; align-items: flex-start; }
@@ -497,3 +517,11 @@ body.page-auto.vscode-high-contrast .pdf-page canvas { filter: invert(0.9) hue-r
 .slide .shape img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .slide .shape ul { margin: 0; padding-left: 1.2em; }
 .slide-notes { font-size: 12px; opacity: 0.8; margin-top: 6px; white-space: pre-wrap; }
+
+/* Password box for encrypted archives */
+.archive-center { display: flex; justify-content: center; padding: 32px 16px; }
+.archive-pw { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 380px; margin: 24px auto; text-align: center; }
+.archive-pw-icon { font-size: 32px; }
+.archive-pw-row { display: flex; gap: 6px; width: 100%; justify-content: center; }
+.archive-pw-input { flex: 1; min-width: 0; padding: 4px 8px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 2px; }
+.archive-pw-input:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }

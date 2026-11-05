@@ -311,7 +311,15 @@ function buildSettingsMenu() {
     toggle(false);
   });
 
-  menu.append(autoSec, viewSec, openSec, langSec, actions, status, allBtn);
+  // Windows: add "Open with <editor>" to File Explorer's right-click menu.
+  const explorerBtn = el('button', { className: 'settings-link', textContent: t('explorerMenuBtn'), title: t('explorerMenuBtnTitle') });
+  explorerBtn.hidden = !/Win/i.test(navigator.platform || navigator.userAgent);
+  explorerBtn.addEventListener('click', () => {
+    vscode.postMessage({ type: 'tool', id: 'addExplorerMenu' });
+    toggle(false);
+  });
+
+  menu.append(autoSec, viewSec, openSec, langSec, actions, status, explorerBtn, allBtn);
 
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
   function setStatus(text: string, kind: 'ok' | 'error' | '' = '') {

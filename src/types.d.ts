@@ -8,6 +8,11 @@ declare module 'html-to-docx' {
   export default HTMLtoDOCX;
 }
 
+declare module 'seek-bzip' {
+  const Bunzip: { decode(input: Uint8Array, output?: Uint8Array): Buffer };
+  export default Bunzip;
+}
+
 declare module 'turndown-plugin-gfm' {
   import type TurndownService from 'turndown';
   export const gfm: TurndownService.Plugin;

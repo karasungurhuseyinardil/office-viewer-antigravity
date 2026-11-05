@@ -36,5 +36,9 @@
   "editor.file": "Office Viewer (any file)",
   "cmd.openInViewer": "Open in Office Viewer",
   "cmd.openInTextEditor": "Edit in Text Editor",
-  "config.openAllFiles": "Open every file in Office Viewer, code too. Code shows with syntax colours and line numbers; **Edit in editor** opens the normal text editor at the same line. Diff views, unsaved tabs and debugging always use the text editor."
+  "config.openAllFiles": "Open every file in Office Viewer, code too. Code shows with syntax colours and line numbers; **Edit in editor** opens the normal text editor at the same line. Diff views, unsaved tabs and debugging always use the text editor.",
+  "config.decompilerPath": "Path to ILSpy's `ilspycmd` (used to show the C# code of .NET DLL / EXE files). Empty: found automatically (PATH or the .NET tools folder).",
+  "cmd.addExplorerMenu": "Add \"Open with …\" to the Windows File Explorer Menu",
+  "cmd.removeExplorerMenu": "Remove \"Open with …\" from the Windows File Explorer Menu",
+  "config.sevenZipPath": "Path to `7z.exe` (7-Zip). Used for encrypted RAR / 7z archives. Empty: found automatically."
 }

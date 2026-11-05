@@ -21,13 +21,27 @@ UI in English, Español, Français and Türkçe.
   editor at the same line (IntelliSense, refactoring…). Tools → export to PDF / HTML / Markdown.
 - **Markdown**: rendered preview + source; export to Word / PDF / HTML.
 - **Images** (png, jpg, gif, webp, svg, ico, bmp, avif…), **audio** (mp3, wav, ogg, flac…), **video** (mp4, webm…), **fonts** (ttf, otf, woff).
-- **Archives** (zip, jar, apk, nupkg, whl, epub…): file list, preview inside, save single files.
+- **Archives**: file list, preview inside, save single files. zip / jar / apk / nupkg / whl / epub are read in the viewer;
+  **rar, 7z, tar, tar.gz / .bz2 / .xz / .zst, gz, iso, cab, cpio, deb, rpm** are read with the system `tar`
+  (bsdtar / libarchive — built into Windows 10+ and macOS). Single compressed files (**.gz, .bz2, .xz, .zst**) open directly.
+- **Password-protected archives**: a password box appears in the viewer (kept in memory only, never saved).
+  Encrypted zip works out of the box; encrypted **RAR / 7z** need [7-Zip](https://www.7-zip.org) — the viewer offers to
+  install it with one click (winget) or set `officeViewer.sevenZip.path`.
 - **OpenDocument** (.odt / .odp text preview, .ods in the spreadsheet viewer), **RTF** (text preview).
-- **Anything else** (exe, dll, db, iso…): file type from its signature + hex view. Huge files: only the beginning is read.
+- **DLL / EXE**: .NET assembly name, version, target framework, platform, company, referenced assemblies, and a searchable list
+  of types and methods; native files show version info and imported DLLs. **PDB**: format and the source files it was built from.
+- **C# code of .NET DLL / EXE**: click a type's **C#** button or a method name (or **C# (whole DLL)**) to decompile it with
+  [ILSpy](https://github.com/icsharpcode/ILSpy)'s `ilspycmd`; the code opens read-only beside the viewer, at that method.
+  If `ilspycmd` is missing, the extension offers to install it (`dotnet tool install --global ilspycmd`, needs the .NET SDK).
+- **Anything else** (db, iso…): file type from its signature + hex view. Huge files: only the beginning is read.
 
 **Open all files here** (⚙ menu, on by default): files that open in the text editor switch to Office Viewer.
 Diff views, unsaved tabs, debugging, and files you chose to edit ("Edit in editor", "Reopen Editor With…") stay in the text editor.
 Right-click any file → **Open in Office Viewer** / **Edit in Text Editor**.
+
+**Windows File Explorer**: ⚙ menu → **Add to File Explorer menu** (or the command *Add "Open with …" to the Windows File Explorer Menu*)
+adds "Open with Antigravity IDE" (or VS Code / Cursor — whichever editor runs the extension) to the right-click menu of folders,
+folder background, drives and files. Current user only, no admin rights; the matching *Remove* command takes it out again.
 
 ## Language
 English (default), Español, Français, Türkçe — ⚙ menu → Language, or the `officeViewer.language` setting.

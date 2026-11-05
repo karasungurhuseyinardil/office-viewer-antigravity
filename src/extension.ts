@@ -9,6 +9,8 @@ import { compareFile, registerCompareProvider } from './compare';
 import { searchNotes } from './notes/search';
 import { showActionList } from './notes/actions';
 import { registerOpenAll } from './openAll';
+import { decompile, registerDecompiledProvider } from './decompile';
+import { addExplorerMenu, removeExplorerMenu } from './explorerMenu';
 import { t } from './lang';
 import type { Key } from '../shared/i18n';
 
@@ -55,6 +57,16 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage(t('pathCopied'), 2000);
     }),
     registerCompareProvider(),
+    registerDecompiledProvider(),
+    vscode.commands.registerCommand('officeViewer.addExplorerMenu', safe('cmdExplorerMenu', addExplorerMenu)),
+    vscode.commands.registerCommand('officeViewer.removeExplorerMenu', safe('cmdExplorerMenu', removeExplorerMenu)),
+    vscode.commands.registerCommand(
+      'officeViewer.decompile',
+      safe('cmdDecompile', async (arg?: unknown, typeName?: unknown, member?: unknown) => {
+        const uri = currentFile(arg);
+        if (uri) await decompile(uri, typeof typeName === 'string' ? typeName : undefined, typeof member === 'string' ? member : undefined);
+      }),
+    ),
     vscode.commands.registerCommand(
       'officeViewer.searchNotes',
       safe('cmdSearch', async (arg?: unknown) => searchNotes(arg instanceof vscode.Uri ? arg : undefined)),

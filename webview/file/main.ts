@@ -4,10 +4,12 @@ import JSZip from 'jszip';
 import { marked } from 'marked';
 import { highlightCode } from '../../shared/highlight';
 import type { Key } from '../../shared/i18n';
-import { $, bytesToBase64, el, locale, setStatus, showBanner, startViewer, t, vscode } from '../common/bridge';
+import { $, base64ToBytes, bytesToBase64, el, locale, setStatus, showBanner, startViewer, t, vscode } from '../common/bridge';
 import { sanitizeHtml } from '../common/sanitize';
+import { isPdb, isPe } from './pe';
+import { renderPdb, renderPe } from './peView';
 
-type Kind = 'text' | 'markdown' | 'svg' | 'image' | 'audio' | 'video' | 'font' | 'zip' | 'odf' | 'rtf' | 'binary';
+type Kind = 'text' | 'markdown' | 'svg' | 'image' | 'audio' | 'video' | 'font' | 'zip' | 'archive' | 'odf' | 'rtf' | 'pe' | 'pdb' | 'binary';
 
 const IMAGE = ['png', 'jpg', 'jpeg', 'jfif', 'gif', 'webp', 'bmp', 'ico', 'cur', 'avif', 'apng'];
 const AUDIO = ['mp3', 'wav', 'ogg', 'oga', 'm4a', 'flac', 'aac', 'opus', 'weba'];
@@ -15,6 +17,8 @@ const VIDEO = ['mp4', 'webm', 'mov', 'm4v', 'ogv', 'mkv'];
 const FONT = ['ttf', 'otf', 'woff', 'woff2'];
 const ZIP = ['zip', 'jar', 'war', 'ear', 'apk', 'aab', 'nupkg', 'whl', 'xpi', 'epub', 'crx', 'sketch', 'docm', 'xlsm', 'pptm'];
 const ODF = ['odt', 'odp', 'odg', 'ott'];
+/** Read by the extension with the system bsdtar (libarchive). */
+const HOST_ARCHIVE = ['rar', '7z', 'tar', 'tgz', 'tbz', 'tbz2', 'txz', 'tzst', 'gz', 'gzip', 'bz2', 'xz', 'zst', 'iso', 'cab', 'cpio', 'lzh', 'lha', 'xar', 'deb', 'rpm', 'a', 'ar'];
 const MIME: Record<string, string> = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', jfif: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
   ico: 'image/x-icon', cur: 'image/x-icon', avif: 'image/avif', apng: 'image/apng', svg: 'image/svg+xml',
@@ -71,12 +75,26 @@ function decodeText(bytes: Uint8Array): { text: string; encoding: string; trunca
 
 function detect(bytes: Uint8Array): Kind {
   if (ext === 'svg') return 'svg';
+  if (isPe(bytes)) return 'pe'; // .dll, .exe, .sys, .ocx, .winmd, ...
+  if ((ext === 'pdb' || ext === 'pdb_') && isPdb(bytes)) return 'pdb';
   if (IMAGE.includes(ext)) return 'image';
   if (AUDIO.includes(ext)) return 'audio';
   if (VIDEO.includes(ext)) return 'video';
   if (FONT.includes(ext)) return 'font';
   if (ODF.includes(ext)) return 'odf';
   if (ZIP.includes(ext)) return 'zip';
+  if (HOST_ARCHIVE.includes(ext)) return 'archive';
+  // Archive signatures with an unknown extension: RAR, 7z, gzip, bzip2, xz, zstd.
+  if (
+    startsWith(bytes, [0x52, 0x61, 0x72, 0x21]) ||
+    startsWith(bytes, [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]) ||
+    startsWith(bytes, [0x1f, 0x8b]) ||
+    startsWith(bytes, [0x42, 0x5a, 0x68]) ||
+    startsWith(bytes, [0xfd, 0x37, 0x7a, 0x58, 0x5a]) ||
+    startsWith(bytes, [0x28, 0xb5, 0x2f, 0xfd])
+  ) {
+    return 'archive';
+  }
   if (startsWith(bytes, [0x7b, 0x5c, 0x72, 0x74, 0x66])) return 'rtf'; // {\rtf
   if (ext === 'md' || ext === 'markdown') return 'markdown';
   if (startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) return 'zip'; // PK..
@@ -257,24 +275,33 @@ async function renderFont(bytes: Uint8Array) {
   setStatus(`${t('typeFont')} · ${fileName} · ${fmtSize(bytes.length)}`);
 }
 
-async function renderZip(bytes: Uint8Array) {
-  const zip = await JSZip.loadAsync(bytes);
-  const files = Object.values(zip.files)
-    .filter((f) => !f.dir)
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const size = (f: JSZip.JSZipObject) => (f as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize ?? 0;
-  const total = files.reduce((n, f) => n + size(f), 0);
+interface ArchiveItem {
+  name: string;
+  size: number;
+}
 
+/** File list + preview pane, shared by zip (read here) and rar / 7z / tar / iso (read by the extension). */
+function renderArchiveView(items: ArchiveItem[], read: (name: string) => Promise<Uint8Array>, archiveSize: number) {
+  const files = [...items].sort((a, b) => a.name.localeCompare(b.name));
+  const total = files.reduce((n, f) => n + f.size, 0);
   const list = el('div', { className: 'zip-list' });
   const preview = el('div', { className: 'zip-preview' }, [el('p', { className: 'settings-note', textContent: t('archiveSelect') })]);
   let selected: HTMLElement | undefined;
   for (const f of files) {
-    const item = el('button', { className: 'zip-item', title: f.name }, [el('span', { className: 'zip-name', textContent: f.name }), el('span', { className: 'zip-size', textContent: fmtSize(size(f)) })]);
+    const item = el('button', { className: 'zip-item', title: f.name }, [el('span', { className: 'zip-name', textContent: f.name }), el('span', { className: 'zip-size', textContent: fmtSize(f.size) })]);
     item.addEventListener('click', async () => {
       selected?.classList.remove('active');
       selected = item;
       item.classList.add('active');
-      const data = await f.async('uint8array');
+      preview.replaceChildren(el('p', { className: 'settings-note', textContent: t('loading') }));
+      let data: Uint8Array;
+      try {
+        data = await read(f.name);
+      } catch (e) {
+        if (selected === item) preview.replaceChildren(archiveErrorBox(e, () => item.click()));
+        return;
+      }
+      if (selected !== item) return; // another file was clicked meanwhile
       const save = el('button', { textContent: t('archiveExtract'), title: t('archiveExtractTitle') });
       save.addEventListener('click', () => vscode.postMessage({ type: 'saveBytes', name: f.name.split('/').pop(), base64: bytesToBase64(data) }));
       const head = el('div', { className: 'zip-preview-head' }, [el('strong', { textContent: f.name }), save]);
@@ -297,7 +324,127 @@ async function renderZip(bytes: Uint8Array) {
     list.append(item);
   }
   $('#content').replaceChildren(el('div', { className: 'zip-view' }, [list, preview]));
-  setStatus(`${t('typeArchive')} · ${t('archiveSummary', files.length, fmtSize(total))} · ${fmtSize(bytes.length)}`);
+  setStatus(`${t('typeArchive')} · ${t('archiveSummary', files.length, fmtSize(total))} · ${fmtSize(archiveSize)}`);
+}
+
+async function renderZip(bytes: Uint8Array) {
+  const zip = await JSZip.loadAsync(bytes);
+  const files = Object.values(zip.files).filter((f) => !f.dir);
+  const size = (f: JSZip.JSZipObject) => (f as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize ?? 0;
+  renderArchiveView(
+    files.map((f) => ({ name: f.name, size: size(f) })),
+    (name) => zip.file(name)!.async('uint8array'),
+    bytes.length,
+  );
+}
+
+// ---------- Archives read by the extension (bsdtar) ----------
+
+/** Host error with a hint: 'password' | 'wrongPassword' | 'need7zip'. */
+class ArchiveFailure extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+  }
+}
+
+const pendingEntries = new Map<number, { resolve(b: Uint8Array): void; reject(e: Error): void }>();
+let pendingList: { resolve(items: ArchiveItem[]): void; reject(e: Error): void } | undefined;
+let nextEntryId = 1;
+/** Typed by the user for this archive; kept only in memory, sent with each request. */
+let archivePassword: string | undefined;
+let hostArchiveSize = 0;
+window.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (msg?.type === 'archiveList' && pendingList) {
+    const p = pendingList;
+    pendingList = undefined;
+    if (msg.error) p.reject(new ArchiveFailure(String(msg.error), msg.code));
+    else p.resolve(Array.isArray(msg.entries) ? msg.entries : []);
+  } else if (msg?.type === 'archiveEntry') {
+    const p = pendingEntries.get(msg.requestId);
+    if (!p) return;
+    pendingEntries.delete(msg.requestId);
+    if (msg.error) p.reject(new ArchiveFailure(String(msg.error), msg.code));
+    else p.resolve(base64ToBytes(String(msg.base64 ?? '')));
+  } else if (msg?.type === 'archiveRetry' && kind === 'archive') {
+    // 7-Zip was just installed
+    renderHostArchive(hostArchiveSize).catch((e) => $('#content').replaceChildren(archiveErrorBox(e, () => renderHostArchive(hostArchiveSize))));
+  }
+});
+
+/**
+ * Error panel for archives: a password box (encrypted), an "Install 7-Zip" button
+ * (encrypted RAR / 7z without 7-Zip) or the plain message. `retry` runs after a password is entered.
+ */
+function archiveErrorBox(e: unknown, retry: () => void): HTMLElement {
+  const code = e instanceof ArchiveFailure ? e.code : undefined;
+  const message = e instanceof Error ? e.message : String(e);
+  if (code === 'password' || code === 'wrongPassword') {
+    const input = el('input', { type: 'password', className: 'archive-pw-input', placeholder: t('archivePasswordPlaceholder'), autocomplete: 'off' });
+    const ok = el('button', { className: 'primary', textContent: t('archiveOpen') });
+    const submit = () => {
+      if (!input.value) return input.focus();
+      archivePassword = input.value;
+      retry();
+    };
+    ok.addEventListener('click', submit);
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') submit();
+    });
+    const box = el('div', { className: 'archive-pw' }, [
+      el('div', { className: 'archive-pw-icon', textContent: '🔒' }),
+      el('strong', { textContent: t('archiveEncrypted') }),
+      el('p', { className: code === 'wrongPassword' ? 'error' : 'settings-note', textContent: t(code === 'wrongPassword' ? 'archiveWrongPassword' : 'archivePasswordPrompt') }),
+      el('div', { className: 'archive-pw-row' }, [input, ok]),
+      el('p', { className: 'settings-note', textContent: t('archivePasswordNote') }),
+    ]);
+    setTimeout(() => input.focus(), 0);
+    return box;
+  }
+  if (code === 'need7zip') {
+    const install = el('button', { className: 'primary', textContent: t('sevenZipInstall') });
+    install.addEventListener('click', () => vscode.postMessage({ type: 'install7zip' }));
+    return el('div', { className: 'archive-pw' }, [
+      el('div', { className: 'archive-pw-icon', textContent: '🔒' }),
+      el('strong', { textContent: t('archiveEncrypted') }),
+      el('p', { className: 'settings-note', textContent: message }),
+      el('div', { className: 'archive-pw-row' }, [install]),
+    ]);
+  }
+  return el('p', { className: 'error', textContent: t('archiveError', message) });
+}
+
+async function renderHostArchive(archiveSize: number) {
+  hostArchiveSize = archiveSize;
+  $('#content').replaceChildren(el('div', { className: 'loading', textContent: t('archiveLoading') }));
+  let items: ArchiveItem[];
+  try {
+    items = await new Promise<ArchiveItem[]>((resolve, reject) => {
+      pendingList = { resolve, reject };
+      vscode.postMessage({ type: 'archiveList', password: archivePassword });
+    });
+  } catch (e) {
+    // Encrypted list (RAR -hp, 7z -mhe): ask here instead of falling back to the hex view.
+    if (!(e instanceof ArchiveFailure) || !e.code) throw e;
+    kind = 'archive';
+    $('#content').replaceChildren(el('div', { className: 'archive-center' }, [archiveErrorBox(e, () => renderHostArchive(archiveSize).catch((err) => $('#content').replaceChildren(archiveErrorBox(err, () => undefined))))]));
+    setStatus(`${t('typeArchive')} · ${fmtSize(archiveSize)}`);
+    return;
+  }
+  kind = 'archive';
+  renderArchiveView(
+    items,
+    (name) =>
+      new Promise<Uint8Array>((resolve, reject) => {
+        const requestId = nextEntryId++;
+        pendingEntries.set(requestId, { resolve, reject });
+        vscode.postMessage({ type: 'archiveEntry', requestId, name, password: archivePassword });
+      }),
+    archiveSize,
+  );
 }
 
 async function renderOdf(bytes: Uint8Array) {
@@ -399,6 +546,15 @@ startViewer(
       setExtra();
       showBanner('');
 
+      const fullSize = init.totalSize ?? bytes.length;
+      if (kind === 'archive') {
+        return renderHostArchive(fullSize).catch((e) => {
+          kind = 'binary';
+          renderBinary(bytes, fullSize);
+          showBanner(t('archiveError', e instanceof Error ? e.message : String(e)), 'warn');
+        });
+      }
+
       // Huge file: only its beginning was sent; show details + hex of that part.
       if (init.totalSize && init.totalSize > bytes.length) {
         kind = 'binary';
@@ -410,7 +566,21 @@ startViewer(
       if (kind === 'image') return renderImage(bytes, MIME[ext] ?? 'image/png');
       if (kind === 'audio' || kind === 'video') return renderMedia(bytes, kind === 'video');
       if (kind === 'font') return renderFont(bytes).catch(() => renderBinary(bytes));
-      if (kind === 'zip') return renderZip(bytes).catch(() => renderBinary(bytes));
+      if (kind === 'zip') {
+        return renderZip(bytes).catch(() =>
+          renderHostArchive(fullSize).catch((e) => {
+            kind = 'binary';
+            renderBinary(bytes, fullSize);
+            showBanner(t('archiveError', e instanceof Error ? e.message : String(e)), 'warn');
+          }),
+        );
+      }
+      if (kind === 'pe' || kind === 'pdb') {
+        const deps = { fileName, fmtSize, renderHex: () => renderBinary(bytes), setExtra, toggle };
+        if ((kind === 'pe' ? renderPe : renderPdb)(bytes, deps)) return;
+        kind = 'binary';
+        return renderBinary(bytes);
+      }
       if (kind === 'odf') return renderOdf(bytes).catch(() => renderBinary(bytes));
 
       const decoded = decodeText(bytes);
@@ -460,7 +630,7 @@ startViewer(
     },
     gotoLine,
     editAction() {
-      if (kind === 'binary' || kind === 'image' || kind === 'audio' || kind === 'video' || kind === 'font' || kind === 'zip' || kind === 'odf') return null;
+      if (kind !== 'text' && kind !== 'markdown' && kind !== 'svg' && kind !== 'rtf') return null;
       return {
         label: t('editInEditor'),
         title: t('editInEditorTitle'),

@@ -3,6 +3,12 @@ import { spawn } from 'node:child_process';
 import { applySettingsFromWebview, readSettings } from '../settings';
 import { currentLang, t } from '../lang';
 import { lineOnOpen, textEditorAllowed } from '../textAllow';
+import { ArchiveError, installSevenZip, listArchive, readArchiveEntry } from '../archive';
+
+/** Error text + what the webview should offer (password box, 7-Zip install). */
+function archiveFailure(e: unknown): { error: string; code?: string } {
+  return { error: e instanceof Error ? e.message : String(e), code: e instanceof ArchiveError ? e.code : undefined };
+}
 import { open as fsOpen } from 'node:fs/promises';
 
 /** Message the webview sends back when asked for its current content. */
@@ -225,7 +231,37 @@ export class OfficeEditorProvider implements vscode.CustomEditorProvider<OfficeD
           break;
         case 'tool':
           if (msg.id === 'editInTextEditor') await this.editInTextEditor(doc, panel, Number(msg.line) || 1);
+          else if (msg.id === 'decompile') {
+            const str = (v: unknown) => (typeof v === 'string' && v.length < 1000 ? v : undefined);
+            await vscode.commands.executeCommand('officeViewer.decompile', doc.uri, str(msg.typeName), str(msg.member));
+          }
           else await this.runTool(doc, String(msg.id), msg.format);
+          break;
+        // Archives the webview can't read (rar, 7z, tar.*, iso…): listed / extracted with bsdtar or 7-Zip.
+        // The password lives only in the webview's memory and comes with each request.
+        case 'archiveList': {
+          if (doc.uri.scheme !== 'file') break;
+          const password = typeof msg.password === 'string' && msg.password ? msg.password : undefined;
+          try {
+            panel.webview.postMessage({ type: 'archiveList', entries: await listArchive(doc.uri.fsPath, password) });
+          } catch (e) {
+            panel.webview.postMessage({ type: 'archiveList', ...archiveFailure(e) });
+          }
+          break;
+        }
+        case 'archiveEntry': {
+          if (doc.uri.scheme !== 'file' || typeof msg.name !== 'string') break;
+          const password = typeof msg.password === 'string' && msg.password ? msg.password : undefined;
+          try {
+            const data = await readArchiveEntry(doc.uri.fsPath, msg.name, password);
+            panel.webview.postMessage({ type: 'archiveEntry', requestId: msg.requestId, base64: data.toString('base64') });
+          } catch (e) {
+            panel.webview.postMessage({ type: 'archiveEntry', requestId: msg.requestId, ...archiveFailure(e) });
+          }
+          break;
+        }
+        case 'install7zip':
+          if (await installSevenZip()) panel.webview.postMessage({ type: 'archiveRetry' });
           break;
         case 'saveBytes':
           await saveBytes(doc.uri, String(msg.name ?? 'file'), String(msg.base64 ?? ''));
@@ -299,6 +335,8 @@ export class OfficeEditorProvider implements vscode.CustomEditorProvider<OfficeD
         return vscode.commands.executeCommand('officeViewer.actionList', folder);
       case 'installVsix':
         return vscode.commands.executeCommand('officeViewer.installVsix', doc.uri);
+      case 'addExplorerMenu':
+        return vscode.commands.executeCommand('officeViewer.addExplorerMenu');
     }
   }
 
