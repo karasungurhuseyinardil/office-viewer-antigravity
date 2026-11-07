@@ -51,6 +51,11 @@ export interface FormatHandlers {
   exports?: () => [format: string, label: Key][];
   /** Scroll to a 1-based line. */
   gotoLine?(line: number): void;
+  /**
+   * Full plain text for "Copy text" / Ctrl+A → Ctrl+C when the page shows only part of it
+   * (e.g. long code files rendered in chunks). Undefined: the visible content is copied.
+   */
+  copyText?(): string | undefined;
 }
 
 export const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -446,9 +451,10 @@ const EXPORTS: Record<string, [format: string, label: Key][]> = {
   pptx: [['md', 'fmtMd'], ['txt', 'fmtTxt']],
 };
 
-function toolsFor(ext: string, local: LocalTool[], custom?: [string, Key][]): ToolEntry[] {
+function toolsFor(ext: string, local: LocalTool[], custom?: [string, Key][], copy?: LocalTool): ToolEntry[] {
   const out: ToolEntry[] = [];
   if (ext === 'vsix') return out;
+  if (copy) out.push({ label: copy.label, local: copy }, 'sep');
   const exports = custom ?? EXPORTS[ext];
   if (exports) {
     out.push({ heading: t('toolsExport') });
@@ -583,6 +589,21 @@ export function setStatus(text: string) {
   statusBar.hidden = !text;
 }
 
+let toast: HTMLElement | undefined;
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+/** Short confirmation in the bottom-right corner ("Copied"). */
+export function showToast(text: string) {
+  if (!toast) {
+    toast = el('div', { className: 'toast' });
+    toast.setAttribute('role', 'status');
+    document.body.append(toast);
+  }
+  toast.textContent = text;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast?.classList.remove('show'), 1800);
+}
+
 /**
  * Builds the toolbar and wires host messages to the format handlers.
  * `extra` is a slot for format-specific controls (formatting buttons, zoom, ...).
@@ -697,6 +718,77 @@ export function startViewer(handlers: FormatHandlers, extra?: HTMLElement) {
     document.execCommand(command);
   });
 
+  // ---- Select all / copy: only the document's content, never the toolbar, banners or status bar ----
+  let selectAllText: string | undefined; // what our "select all" selected, to spot it again on copy
+  const isTyping = (node: EventTarget | null) => {
+    const n = node as HTMLElement | null;
+    return !!n && (n.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(n.tagName));
+  };
+  const selectContent = () => {
+    const sel = getSelection();
+    if (!sel) return;
+    const range = document.createRange();
+    range.selectNodeContents($('#content'));
+    sel.removeAllRanges();
+    sel.addRange(range);
+    selectAllText = sel.toString();
+  };
+  /** Content as plain text: the format's full text, else what the page shows. */
+  const contentText = (): string => {
+    const full = handlers.copyText?.();
+    if (full !== undefined) return full;
+    const sel = getSelection();
+    const saved = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : undefined;
+    selectContent();
+    const text = sel?.toString() ?? '';
+    sel?.removeAllRanges();
+    if (saved) sel?.addRange(saved);
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+  };
+  const copyTool: LocalTool = {
+    label: t('copyText'),
+    run: async () => {
+      const text = contentText();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // Older webviews: copy through a hidden textarea.
+        const area = el('textarea', { value: text });
+        area.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.append(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+      showToast(t('copiedText', text.length.toLocaleString(locale)));
+    },
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'a' || isTyping(e.target)) return;
+    e.preventDefault();
+    e.stopPropagation(); // keep the editor's own "select all" (whole page) from running
+    selectContent();
+  });
+  // The editor may still run its "select all" on the whole page: narrow it to the content.
+  document.addEventListener('selectionchange', () => {
+    const sel = getSelection();
+    if (!sel || !sel.rangeCount || isTyping(document.activeElement)) return;
+    const common = sel.getRangeAt(0).commonAncestorContainer;
+    if ((common === document.body || common === document.documentElement) && sel.containsNode(toolbar, true) && sel.containsNode($('#content'), true)) {
+      selectContent();
+    }
+  });
+  // Ctrl+A → Ctrl+C on a long code file: copy all of it, not only the lines rendered so far.
+  document.addEventListener('copy', (e) => {
+    if (selectAllText === undefined || isTyping(document.activeElement)) return;
+    if (getSelection()?.toString() !== selectAllText) return;
+    const full = handlers.copyText?.();
+    if (full === undefined) return;
+    e.clipboardData?.setData('text/plain', full);
+    e.preventDefault();
+  });
+
   window.addEventListener('message', async (event) => {
     const msg = event.data;
     if (msg?.type === 'init') {
@@ -707,14 +799,14 @@ export function startViewer(handlers: FormatHandlers, extra?: HTMLElement) {
       editing = false;
       saveBtn!.disabled = true;
       refreshEditButton(canEdit);
-      tools.setItems(toolsFor(init.ext, handlers.localTools ?? []));
+      tools.setItems(toolsFor(init.ext, handlers.localTools ?? [], undefined, copyTool));
       fitToolbar();
       try {
         await handlers.render(base64ToBytes(init.base64), init);
         editing = canEdit && !!init.startEditing;
         handlers.setEditing?.(editing);
         refreshEditButton(canEdit);
-        if (handlers.exports) tools.setItems(toolsFor(init.ext, handlers.localTools ?? [], handlers.exports()));
+        if (handlers.exports) tools.setItems(toolsFor(init.ext, handlers.localTools ?? [], handlers.exports(), copyTool));
         fitToolbar();
         if (init.find) findText(init.find);
         if (init.line) handlers.gotoLine?.(init.line);

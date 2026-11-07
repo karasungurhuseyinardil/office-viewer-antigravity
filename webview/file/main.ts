@@ -180,7 +180,9 @@ function renderMoreLines() {
   return start;
 }
 
+let codeText = '';
 function renderCode(text: string) {
+  codeText = text;
   const { html, language } = highlightCode(text, fileName);
   pendingLines = splitHighlighted(html);
   renderedLines = [];
@@ -629,6 +631,8 @@ startViewer(
       info(total, language);
     },
     gotoLine,
+    // Code view renders long files in chunks: copy the whole text, not just the lines shown.
+    copyText: () => (lineContainer?.isConnected ? codeText : undefined),
     editAction() {
       if (kind !== 'text' && kind !== 'markdown' && kind !== 'svg' && kind !== 'rtf') return null;
       return {

@@ -176,7 +176,7 @@ body.vscode-light {
 .pe-ns { margin-left: 4px; }
 .pe-type { margin-left: 18px; }
 .pe-type > summary { cursor: pointer; padding: 1px 0; color: var(--hl-type); }
-.pe-type ul { margin: 2px 0 6px; padding-left: 28px; list-style: '› '; color: var(--hl-function); }
+.pe-type ul { margin: 2px 0 6px; padding-left: 28px; list-style: 'â€º '; color: var(--hl-function); }
 .pe-type.private > summary, .pe-type li.private { opacity: 0.55; }
 .pe-type > summary .cs-btn { margin-left: 8px; padding: 0 6px; font-size: 11px; line-height: 16px; vertical-align: middle; opacity: 0; }
 .pe-type > summary:hover .cs-btn, .pe-type > summary .cs-btn:focus-visible, .pe-type[open] > summary .cs-btn { opacity: 1; }
@@ -215,7 +215,7 @@ table.grid.vsix-file-table td.num { white-space: nowrap; width: 90px; }
   .vsix-header { flex-direction: column; }
 }
 
-/* Actions panel (no ⚙ / Araçlar buttons there). */
+/* Actions panel (no âš™ / AraÃ§lar buttons there). */
 #toolbar.plain { padding-right: 12px; }
 table.grid.actions-grid { width: 100%; font-family: var(--vscode-font-family); font-size: 13px; }
 table.grid.actions-grid th { position: sticky; top: 0; z-index: 2; }
@@ -373,7 +373,7 @@ body.editing .page { box-shadow: 0 0 0 2px var(--vscode-focusBorder), 0 1px 6px 
 .page mark { background: #fff176; color: inherit; }
 body.page-dark .page mark, body.page-auto.vscode-dark .page mark { background: #7a6a00; }
 
-/* İçindekiler side panel next to the page. */
+/* Ä°Ã§indekiler side panel next to the page. */
 .doc-layout { display: flex; gap: 16px; align-items: flex-start; }
 .doc-layout .page { flex: 1; min-width: 0; }
 .toc { display: none; position: sticky; top: 0; width: 220px; flex: none; max-height: calc(100vh - 120px); overflow: auto; font-size: 12px; padding: 4px 0; }
@@ -525,3 +525,15 @@ body.page-auto.vscode-high-contrast .pdf-page canvas { filter: invert(0.9) hue-r
 .archive-pw-row { display: flex; gap: 6px; width: 100%; justify-content: center; }
 .archive-pw-input { flex: 1; min-width: 0; padding: 4px 8px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 2px; }
 .archive-pw-input:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+
+/* Select all / copy: only the document content is selectable */
+#toolbar, .status-bar, #banner, .toast, #content button, #content input, #content select, .inline-check { user-select: none; -webkit-user-select: none; }
+.toast {
+  position: fixed; right: 12px; bottom: 34px; z-index: 50; padding: 6px 12px; border-radius: 4px;
+  color: var(--vscode-notifications-foreground, var(--vscode-foreground));
+  background: var(--vscode-notifications-background, var(--vscode-editorWidget-background));
+  border: 1px solid var(--vscode-notifications-border, var(--vscode-panel-border));
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow, #0005);
+  opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .15s, transform .15s;
+}
+.toast.show { opacity: 1; transform: none; }
