@@ -1,8 +1,8 @@
 {
   "name": "office-viewer-antigravity",
-  "displayName": "Office Viewer — every file type",
+  "displayName": "Office Viewer for Antigravity — DOCX, XLSX, PDF, ZIP, DLL",
   "description": "%ext.description%",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "publisher": "ardilkarasungur",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,36 @@
     "vscode": "^1.90.0"
   },
   "categories": [
+    "Visualization",
     "Other"
+  ],
+  "keywords": [
+    "antigravity",
+    "office",
+    "viewer",
+    "docx",
+    "word",
+    "xlsx",
+    "excel",
+    "csv",
+    "pptx",
+    "powerpoint",
+    "pdf",
+    "zip",
+    "rar",
+    "7z",
+    "archive",
+    "dll",
+    "pdb",
+    "decompile",
+    "csharp",
+    "vsix",
+    "image",
+    "audio",
+    "video",
+    "font",
+    "binary",
+    "hex"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
