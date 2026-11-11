@@ -2,7 +2,7 @@
   "name": "office-viewer-antigravity",
   "displayName": "Office Viewer — every file type",
   "description": "%ext.description%",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "publisher": "ardilkarasungur",
   "license": "MIT",
   "repository": {

@@ -14,14 +14,24 @@ function textTabsFor(key: string): vscode.Tab[] {
   return vscode.window.tabGroups.all.flatMap((g) => g.tabs).filter((t) => t.input instanceof vscode.TabInputText && t.input.uri.toString() === key);
 }
 
+/**
+ * Closes the file's unsaved-free text tabs in one column. Looked up fresh each time: a preview
+ * tab may already have been replaced by the viewer, and closing a stale tab throws.
+ */
+async function closeTextTabs(key: string, column: vscode.ViewColumn) {
+  for (const tab of textTabsFor(key)) {
+    if (tab.isDirty || tab.group.viewColumn !== column) continue;
+    await vscode.window.tabGroups.close(tab, true).then(undefined, () => undefined);
+  }
+}
+
 /** Replaces the text editor tab of `uri` with the viewer, keeping the cursor line. */
-async function swapToViewer(uri: vscode.Uri, group: vscode.TabGroup) {
+async function swapToViewer(uri: vscode.Uri, column: vscode.ViewColumn) {
   const key = uri.toString();
   const editor = vscode.window.visibleTextEditors.find((e) => e.document.uri.toString() === key);
   const line = editor ? editor.selection.active.line + 1 : undefined;
-  await openAndFind(uri, viewerFor(uri), undefined, line && line > 1 ? line : undefined, group.viewColumn);
-  const textTab = group.tabs.find((t) => t.input instanceof vscode.TabInputText && t.input.uri.toString() === key);
-  if (textTab && !textTab.isDirty) await vscode.window.tabGroups.close(textTab, true);
+  await openAndFind(uri, viewerFor(uri), undefined, line && line > 1 ? line : undefined, column);
+  await closeTextTabs(key, column);
 }
 
 /**
@@ -31,6 +41,7 @@ async function swapToViewer(uri: vscode.Uri, group: vscode.TabGroup) {
  */
 export function registerOpenAll(context: vscode.ExtensionContext) {
   const swapping = new Set<string>();
+  const reopenedWhileSwapping = new Set<string>();
 
   context.subscriptions.push(
     vscode.window.tabGroups.onDidChangeTabs((e) => {
@@ -55,13 +66,22 @@ export function registerOpenAll(context: vscode.ExtensionContext) {
           textEditorAllowed.add(key);
           continue;
         }
-        if (textEditorAllowed.has(key) || swapping.has(key) || tab.isDirty || vscode.debug.activeDebugSession) continue;
+        if (textEditorAllowed.has(key) || tab.isDirty || vscode.debug.activeDebugSession) continue;
+        const column = tab.group.viewColumn;
+        if (swapping.has(key)) {
+          // Opened again while the viewer is coming up (e.g. by an agent): close it once that is done.
+          reopenedWhileSwapping.add(key);
+          continue;
+        }
         swapping.add(key);
         // Let the editor settle (cursor position) before swapping.
         setTimeout(() => {
-          swapToViewer(uri, tab.group)
+          swapToViewer(uri, column)
             .catch((err) => console.error('Office Viewer: could not open in viewer', err))
-            .finally(() => swapping.delete(key));
+            .finally(async () => {
+              swapping.delete(key);
+              if (reopenedWhileSwapping.delete(key) && !textEditorAllowed.has(key)) await closeTextTabs(key, column);
+            });
         }, 30);
       }
     }),
@@ -79,7 +99,7 @@ export function registerOpenAll(context: vscode.ExtensionContext) {
       const key = uri.toString();
       textEditorAllowed.delete(key);
       const tab = textTabsFor(key)[0];
-      if (tab && !tab.isDirty) await swapToViewer(uri, tab.group);
+      if (tab && !tab.isDirty) await swapToViewer(uri, tab.group.viewColumn);
       else await openAndFind(uri, viewerFor(uri));
     }),
 
