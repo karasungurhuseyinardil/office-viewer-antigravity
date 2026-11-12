@@ -40,5 +40,7 @@
   "config.decompilerPath": "Ruta a `ilspycmd` de ILSpy (para mostrar el código C# de archivos DLL / EXE .NET). Vacío: se busca automáticamente (PATH o la carpeta de herramientas de .NET).",
   "cmd.addExplorerMenu": "Añadir \"Abrir con …\" al menú del Explorador de Windows",
   "cmd.removeExplorerMenu": "Quitar \"Abrir con …\" del menú del Explorador de Windows",
-  "config.sevenZipPath": "Ruta de `7z.exe` (7-Zip). Se usa para archivos RAR / 7z cifrados. Vacío: se busca automáticamente."
+  "config.sevenZipPath": "Ruta de `7z.exe` (7-Zip). Se usa para archivos RAR / 7z cifrados. Vacío: se busca automáticamente.",
+  "cmd.copyClaudeQuestion": "Copiar pregunta de Claude",
+  "config.claudeQuestionPopup": "Mostrar una notificación con un botón **Copiar** cuando Claude Code hace una pregunta (el texto de su diálogo no se puede seleccionar)."
 }

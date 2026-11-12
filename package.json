@@ -2,7 +2,7 @@
   "name": "office-viewer-antigravity",
   "displayName": "Office Viewer for Antigravity — DOCX, XLSX, PDF, ZIP, DLL",
   "description": "%ext.description%",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "publisher": "ardilkarasungur",
   "license": "MIT",
   "repository": {
@@ -217,6 +217,12 @@
           "default": "",
           "order": 43,
           "markdownDescription": "%config.sevenZipPath%"
+        },
+        "officeViewer.claudeQuestionPopup": {
+          "type": "boolean",
+          "default": true,
+          "order": 50,
+          "markdownDescription": "%config.claudeQuestionPopup%"
         }
       }
     },
@@ -230,6 +236,12 @@
         "command": "officeViewer.copyPath",
         "title": "%cmd.copyPath%",
         "category": "Office Viewer"
+      },
+      {
+        "command": "officeViewer.copyClaudeQuestion",
+        "title": "%cmd.copyClaudeQuestion%",
+        "category": "Office Viewer",
+        "icon": "$(copy)"
       },
       {
         "command": "officeViewer.newMeetingNote",
@@ -887,6 +899,13 @@
           }
         ],
         "priority": "option"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "officeViewer.copyClaudeQuestion",
+        "key": "ctrl+alt+shift+c",
+        "mac": "cmd+alt+shift+c"
       }
     ]
   },

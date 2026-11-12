@@ -40,5 +40,7 @@
   "config.decompilerPath": "Chemin vers `ilspycmd` d'ILSpy (pour afficher le code C# des fichiers DLL / EXE .NET). Vide : détection automatique (PATH ou dossier des outils .NET).",
   "cmd.addExplorerMenu": "Ajouter « Ouvrir avec … » au menu de l'Explorateur Windows",
   "cmd.removeExplorerMenu": "Retirer « Ouvrir avec … » du menu de l'Explorateur Windows",
-  "config.sevenZipPath": "Chemin de `7z.exe` (7-Zip). Utilisé pour les archives RAR / 7z chiffrées. Vide : détection automatique."
+  "config.sevenZipPath": "Chemin de `7z.exe` (7-Zip). Utilisé pour les archives RAR / 7z chiffrées. Vide : détection automatique.",
+  "cmd.copyClaudeQuestion": "Copier la question de Claude",
+  "config.claudeQuestionPopup": "Afficher une notification avec un bouton **Copier** quand Claude Code pose une question (le texte de sa boîte de dialogue ne peut pas être sélectionné)."
 }

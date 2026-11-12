@@ -60,6 +60,7 @@ Command and setting names in Antigravity's own menus follow the editor display l
   - *Search notes*: full-text search in all Word / Excel / CSV / PowerPoint files (Turkish-aware: "ozet" finds "Özet"); opens the file at the match.
   - *Action list*: collects every table with a "Task" column (Owner / Due / Status optional; also Görev, Tarea, Tâche…) from the notes; filter, sort, export to Excel.
 - **Word editing**: highlight, ☐ to-do boxes (click to tick), links, insert table, add / remove rows and columns.
+- **Copy Claude Code questions**: Claude Code's question dialog text can't be selected. When Claude asks, a notification with a **Copy** button appears (setting `officeViewer.claudeQuestionPopup`); or run **Copy Claude Question** (Ctrl+Alt+Shift+C) to copy the latest question and its options.
 - **Excel / CSV**: click a column letter to sort, filter box, fixed header row (view only, the file is not reordered).
 - **⚙ menu** (top-right):
   - *Auto save* — "use the editor setting", or any mix of: after typing stops, on tab/panel change, on leaving the window.

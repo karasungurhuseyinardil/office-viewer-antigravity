@@ -12,6 +12,7 @@ import { registerOpenAll } from './openAll';
 import { decompile, registerDecompiledProvider } from './decompile';
 import { addExplorerMenu, removeExplorerMenu } from './explorerMenu';
 import { t } from './lang';
+import { copyClaudeQuestion, registerClaudeQuestionWatcher } from './claudeQuestion';
 import type { Key } from '../shared/i18n';
 
 /** File for commands run from the palette: the open viewer, else the active text editor. */
@@ -44,6 +45,7 @@ function targetUri(arg: unknown): vscode.Uri | undefined {
 export function activate(context: vscode.ExtensionContext) {
   registerAutoSaveSync(context);
   registerOpenAll(context);
+  registerClaudeQuestionWatcher(context);
   context.subscriptions.push(
     vscode.commands.registerCommand('officeViewer.revealInExplorer', (arg?: unknown) => {
       const uri = targetUri(arg);
@@ -56,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.env.clipboard.writeText(uri.fsPath);
       vscode.window.setStatusBarMessage(t('pathCopied'), 2000);
     }),
+    vscode.commands.registerCommand('officeViewer.copyClaudeQuestion', safe('cmdCopyClaudeQuestion', copyClaudeQuestion)),
     registerCompareProvider(),
     registerDecompiledProvider(),
     vscode.commands.registerCommand('officeViewer.addExplorerMenu', safe('cmdExplorerMenu', addExplorerMenu)),

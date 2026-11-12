@@ -40,5 +40,7 @@
   "config.decompilerPath": "ILSpy `ilspycmd` aracının yolu (.NET DLL / EXE dosyalarının C# kodunu göstermek için). Boşsa otomatik bulunur (PATH veya .NET tools klasörü).",
   "cmd.addExplorerMenu": "Windows Dosya Gezgini Menüsüne \"… ile Aç\" Ekle",
   "cmd.removeExplorerMenu": "Windows Dosya Gezgini Menüsünden \"… ile Aç\"ı Kaldır",
-  "config.sevenZipPath": "`7z.exe` (7-Zip) yolu. Şifreli RAR / 7z arşivleri için kullanılır. Boş: otomatik bulunur."
+  "config.sevenZipPath": "`7z.exe` (7-Zip) yolu. Şifreli RAR / 7z arşivleri için kullanılır. Boş: otomatik bulunur.",
+  "cmd.copyClaudeQuestion": "Claude Sorusunu Kopyala",
+  "config.claudeQuestionPopup": "Claude Code soru sorduğunda **Kopyala** butonlu bildirim göster (soru penceresindeki metin seçilemiyor)."
 }
